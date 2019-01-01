@@ -8,7 +8,7 @@ on systems without a full featured Perl and/or bash or a busybox
 system. 
 
 MuninLite is Copyright (C) 2007 Rune Nordbøe Skillingstad
-<rune@skillingstad.no> and released under GPLv2 (see LICENSE file)
+<rune@skillingstad.no> and released under GPLv2 (see [LICENSE](LICENSE) file)
 
 Features
 --------
@@ -59,26 +59,27 @@ Included files
 |plugins/processes		|Number of Processes plugin
 |plugins/swap			|Swap in/out plugin
 |plugins/uptime			|Uptime plugin
+|plugins/owswitch		|OpenWRT switch plugin (not used by default)
 
 Build requirements
 ------------------
 
-Make	     (Not sure what requirements)
-Perl         (even very old versions should work)
+`Make`	     (Not sure what requirements)
+`Perl`         (even very old versions should work)
 
 Requirements
 ------------
 
-Bourne Shell (ash or dash should be sufficient)
+Bourne Shell (`ash` or `dash` should be sufficient)
 
 | Command | Info
 |------|------
-|grep	     |(simple grep in busybox is sufficient)
-|sed	     |(simple sed in busybox is sufficient -- but a bit strange...)
-|cut	     |(cut in busybox is sufficient)
-|wc	     |(wc in busybox is sufficient)
-|xargs	     |(xargs in busybox is sufficient)
-|inetd	     |(inetd in busybox is sufficient)
+|`grep`	     |(simple grep in busybox is sufficient)
+|`sed`	     |(simple sed in busybox is sufficient -- but a bit strange...)
+|`cut`	     |(cut in busybox is sufficient)
+|`wc`	     |(wc in busybox is sufficient)
+|`xargs`     |(xargs in busybox is sufficient)
+|`inetd`     |(inetd in busybox is sufficient)
 
 Installation
 ------------
@@ -86,7 +87,7 @@ Installation
 Download source and unpack it.
 Edit Makefile to suit your choice of plugins
 
-Make munin-node by running "make"
+Make munin-node by running `"make"`
 
 ```
   # make
@@ -105,31 +106,31 @@ Make munin-node by running "make"
   Adding plugin irqstats
 ```
 
-Copy munin-node to a suitable location (/usr/local/bin/) and make it
-executable (there will be a "make install" at a later release)
+Copy munin-node to a suitable location (`/usr/local/bin/`) and make it
+executable (there will be a `"make install"` at a later release)
 
 ```
   # cp munin-node /usr/local/bin
   # chmod +x /usr/local/bin/munin-node
 ```
 
-Add munin port to /etc/services
+Add munin port to `/etc/services`
 
 ```
   # echo "munin           4949/tcp        lrrd            # Munin" >>/etc/services
 ```
 
-Configure inetd or xinetd to fork this script for request on the
+Configure `inetd` or `xinetd` to fork this script for request on the
 munin port (4949). 
 
-Sample configuration for xinetd is located in examples/xinetd.d/munin
+Sample configuration for `xinetd` is located in `examples/xinetd.d/munin`
 
 ```
   # cp examples/xinetd.d/munin /etc/xinetd.d 
   # killall -HUP xinetd
 ```
 
-Sample configuration for inetd is located in examples/inetd.conf
+Sample configuration for `inetd` is located in `examples/inetd.conf`
 
 ```
   # cat examples/inetd.conf >> /etc/inetd.conf
@@ -138,7 +139,7 @@ Sample configuration for inetd is located in examples/inetd.conf
 
 Restrict access to munin port using hosts.allow and
 hosts.deny or add a rule to your favorite firewall config.
-Examples of hosts.allow/deny settings is provided in the examples
+Examples of `hosts.allow/deny` settings is provided in the examples
 directory.
 
 Iptables might be set with something like this:
@@ -185,15 +186,15 @@ For inetd-test, try to telnet to munin port from allowed host.
 Plugin configuration 
 --------------------
 
-To configure which plugins should be enabled, locate the PLUGINS
-variable in munin-node and remove unwanted plugins.
+To configure which plugins should be enabled, locate the `PLUGINS`
+variable in `munin-node` and remove unwanted plugins.
 
 There is no specific configuration for plugins. 
 
 Munin configuration
 -------------------
 
-Configure your /etc/munin/munin.conf as you would for a regular
+Configure your `/etc/munin/munin.conf` as you would for a regular
 munin-node.
 
 ```
