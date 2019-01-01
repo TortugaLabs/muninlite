@@ -1,11 +1,26 @@
+#!/bin/sh
+
 config_uptime() {
   echo "graph_title Uptime"
-  echo "graph_args --base 1000 -l 0 "
-  echo "graph_vlabel uptime in days"
+  echo "graph_args --base 1000 -r --lower-limit 0 --upper-limit 110"
+  echo "graph_vlabel uptime %"
+  echo "graph_scale no"
+  echo "graph_category system"
+  echo "graph_period second"
+
   echo "uptime.label uptime"
   echo "uptime.draw AREA"
-  echo "uptime.cdef uptime,86400,/"
+  echo "uptime.type DERIVE"
 }
 fetch_uptime() {
   echo "uptime.value" $(cut -d\  -f1 /proc/uptime)
 }
+
+#~ config_uptime() {
+  #~ echo "graph_title Uptime"
+  #~ echo "graph_args --base 1000 -l 0 "
+  #~ echo "graph_vlabel uptime in days"
+  #~ echo "uptime.label uptime"
+  #~ echo "uptime.draw AREA"
+  #~ echo "uptime.cdef uptime,86400,/"
+#~ }

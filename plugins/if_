@@ -1,3 +1,18 @@
+#!/bin/sh
+#
+# Runtime configuration...
+#
+if is_plugin_enabled "if_" ; then
+  remove_plugin "if_"
+  for INTER in $(select_net_devs);
+  do
+    INTERRES=$(clean_net_dev_name $INTER)
+    add_plugin "if_$INTERRES"
+    eval "fetch_if_${INTERRES}() { fetch_if $INTER \$@; };"
+    eval "config_if_${INTERRES}() { config_if $INTER \$@; };"
+  done
+fi
+
 config_if() {
   echo "graph_order down up"
   echo "graph_title $1 traffic"

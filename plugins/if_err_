@@ -1,3 +1,16 @@
+#!/bin/sh
+
+if is_plugin_enabled "if_err_" ; then
+  remove_plugin "if_err_"
+  for INTER in $(select_net_devs);
+  do
+    INTERRES=$(clean_net_dev_name $INTER)
+    add_plugin "if_err_$INTERRES"
+    eval "fetch_if_err_${INTERRES}() { fetch_if_err $INTER \$@; };"
+    eval "config_if_err_${INTERRES}() { config_if_err $INTER \$@; };"
+  done
+fi
+
 config_if_err() {
   echo "graph_order rcvd trans"
   echo "graph_title $1 errors"

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+if is_plugin_enabled "plugindir_" ; then
+  remove_plugin "plugindir_"
+  for MYPLUGIN in $(ls -1 $PLUGINPATTERN 2>/dev/null );
+  do
+    if [ -f $MYPLUGIN -a -x $MYPLUGIN ]; then
+      MYPLUGINNAME=$(basename $MYPLUGIN)
+      #ensure we don't have name collision
+      if echo "$PLUGINS" | grep "\b$MYPLUGINNAME\b" >/dev/null 2>&1 ; then
+	MYPLUGINNAME="plugindir_$MYPLUGINNAME"
+      fi
+      add_plugin $MYPLUGINNAME
+      RES="$RES $MYPLUGINNAME"
+      eval "fetch_${MYPLUGINNAME}() { $MYPLUGIN ; };"
+      eval "config_${MYPLUGINNAME}() { $MYPLUGIN config ; };"
+    fi
+  done
+fi
+
+

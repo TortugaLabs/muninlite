@@ -1,0 +1,137 @@
+#!/bin/sh
+#
+# Runtime configuration...
+#
+if is_plugin_enabled "owswitch_" ; then
+  remove_plugin "owswitch_"
+  if type swconfig >/dev/null 2>&1 ; then
+    # SWCONFIG binary found...
+    for swdev in $(swconfig list | cut -d: -f2 | cut -d- -f1)
+    do
+      for port in $(swconfig dev "$swdev" show  | grep '^Port [0-9]*:$' | tr -dc 0-9: | tr ':' ' ')
+      do
+	swport="${swdev}p${port}"
+	add_plugin "swport_$swport"
+	eval "fetch_swport_${swport}() { fetch_owswitch $swdev $port \$@; };"
+	eval "config_swport_${swport}() { config_owswitch $swdev $port \$@; };"
+	add_plugin "swerr_$swport"
+	eval "fetch_swerr_${swport}() { fetch_owswitch_err $swdev $port \$@; };"
+	eval "config_swerr_${swport}() { config_owswitch_err $swdev $port \$@; };"
+      done
+    done
+  fi
+fi
+
+config_owswitch() {
+  echo "graph_order down up"
+  echo "graph_title $1 Port $2 traffic"
+  echo "graph_args --base 1000"
+  echo "graph_vlabel bits in (-) / out (+) per \${graph_period}"
+  echo "graph_category network"
+  echo "graph_info This graph shows the traffic of the $1/$2 switch port."
+  echo "down.label received"
+  echo "down.type DERIVE"
+  echo "down.min 0"
+  echo "down.graph no"
+  echo "down.cdef down,8,*"
+  echo "up.label bps"
+  echo "up.type DERIVE"
+  echo "up.min 0"
+  echo "up.negative down"
+  echo "up.cdef up,8,*"
+}
+fetch_owswitch() {
+  swconfig dev "$1" show | (
+    found=false
+    while read a b c d
+    do
+      [ -z "$a" ] && continue || :
+      [ -z "$b" ] && continue || :
+      if [ "$a" = "Port" -a "$b" = "$2:" ] ; then
+	found=true
+	break
+      fi
+    done
+    $found || exit 0
+    while read a b c d
+    do
+      [ -z "$a" ] && continue || :
+      [ "$a" = "Port" ] && exit
+      [ -z "$c" ] && continue || :
+      if [ "$a" = "IfInOctets" ] ; then
+	echo "down.value" $c
+      elif [ "$a" = "IfOutOctets" ] ; then
+	echo "up.value" $c
+      fi
+    done
+  )
+}
+
+config_owswitch_err() {
+  echo "graph_order rcvd trans"
+  echo "graph_title $1 Port $2 errors"
+  echo "graph_args --base 1000"
+  echo "graph_vlabel packets in (-) / out (+) per \${graph_period}"
+  echo "graph_category network"
+  echo "graph_info This graph shows the amount of errors on the $1/$2 switch port"
+  echo "rcvd.label packets"
+  echo "rcvd.type COUNTER"
+  echo "rcvd.graph no"
+  echo "rcvd.warning 1"
+  echo "trans.label packets"
+  echo "trans.type COUNTER"
+  echo "trans.negative rcvd"
+  echo "trans.warning 1"
+}
+
+fetch_owswitch_err() {
+  swconfig dev "$1" show | (
+    found=false
+    while read a b c d
+    do
+      [ -z "$a" ] && continue || :
+      [ -z "$b" ] && continue || :
+      if [ "$a" = "Port" -a "$b" = "$2:" ] ; then
+	found=true
+	break
+      fi
+    done
+    $found || exit 0
+    out=0
+    inp=0
+    while read a b c d
+    do
+      [ -z "$a" ] && continue || :
+      if [ "$a" = "Port" ] ; then
+	echo "down.value" $inp
+	echo "up.value" $out
+	exit
+      fi
+      [ -z "$c" ] && continue || :
+      for v in EtherStatsUnderSizePkts EtherOversizeStats EtherStatsJabbers \
+		EtherStatsDropEvents Dot3StatsFCSErrors Dot3StatsSymbolErrors \
+		Dot3InPauseFrames Dot3ControlInUnknownOpcodes
+      do
+	if [ "$a" = "$v" ] ; then
+	  inp=$(expr $inp + $c)
+	  break
+	fi
+      done
+      for v in Dot3StatsSingleCollisionFrames Dot3StatMultipleCollisionFrames \
+		Dot3sDeferredTransmissions Dot3StatsLateCollisions EtherStatsCollisions \
+		Dot3StatsExcessiveCollisions Dot3OutPauseFrames Dot1dBasePortDelayExceededDiscards \
+		Dot1dTpPortInDiscards
+      do
+	if [ "$a" = "$v" ] ; then
+	  out=$(expr $out + $c)
+	  break
+	fi
+      done
+    done
+  )
+}
+
+# Input errors
+
+
+
