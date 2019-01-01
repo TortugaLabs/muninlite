@@ -32,6 +32,8 @@ MuninLite implements the following plugins:
 Included files
 --------------
 
+| File | Info
+|------|------
 |Changelog     			|Changelog 
 |CREDITS	      		|Credits to contributors
 |LICENSE			|GPLv2 License
@@ -69,6 +71,8 @@ Requirements
 
 Bourne Shell (ash or dash should be sufficient)
 
+| Command | Info
+|------|------
 |grep	     |(simple grep in busybox is sufficient)
 |sed	     |(simple sed in busybox is sufficient -- but a bit strange...)
 |cut	     |(cut in busybox is sufficient)
@@ -179,7 +183,7 @@ For inetd-test, try to telnet to munin port from allowed host.
 ```
 
 Plugin configuration 
-------------------------
+--------------------
 
 To configure which plugins should be enabled, locate the PLUGINS
 variable in munin-node and remove unwanted plugins.
