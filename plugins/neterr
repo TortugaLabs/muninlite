@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+config_neterr() {
+  echo "graph_order down up"
+  echo "graph_title Network Errors"
+  echo "graph_args --base 1000"
+  echo "graph_vlabel bits in (-) / out (+) per \${graph_period}"
+  echo "graph_category network"
+  echo "graph_info This graph shows the amount of errors across all network interfaces."
+  echo "down.label received"
+  echo "down.type DERIVE"
+  echo "down.min 0"
+  echo "down.graph no"
+  echo "up.label bps"
+  echo "up.type DERIVE"
+  echo "up.min 0"
+  echo "up.negative down"
+}
+fetch_neterr() {
+  awk '
+    /:/ { down_cnt += $4 ; up_cnt += $12 }
+    END {
+      print "down.value",down_cnt
+      print "up.value",up_cnt
+    }' /proc/net/dev
+}
