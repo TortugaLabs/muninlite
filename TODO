@@ -1,2 +1,11 @@
 * Homepage
 * Documentation
+
+Plugins:
+- new volume group free %
+- "df", if 1% is more than 10000 1-kb blocks (10G?) set tresholds at 99/98
+  
+CN2:
+PLUGINS="df cpu sensors load memory processes netstat uptime interrupts  libvirt_cpu libvirt_netbps libvirt_netpkts libvirt_blkiops libvirt_blkbps netbps neterr"
+VM:
+PLUGINS="df cpu if_ load memory processes netstat uptime interrupts"
