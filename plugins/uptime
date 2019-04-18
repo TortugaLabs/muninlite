@@ -11,9 +11,10 @@ config_uptime() {
   echo "uptime.label uptime"
   echo "uptime.draw AREA"
   echo "uptime.type DERIVE"
+  echo "uptime.min 0"
 }
 fetch_uptime() {
-  echo "uptime.value" $(cut -d\  -f1 /proc/uptime)
+  echo "uptime.value" $(awk '{printf "%d",$1*100}' /proc/uptime)
 }
 
 #~ config_uptime() {
