@@ -2,6 +2,7 @@
 
 PLUGINS=df cpu if_ if_err_ load memory processes swap netstat uptime interrupts irqstats ntpdate plugindir_
 #PLUGINS=cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats
+#make PLUGINS="df cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats"
 
 munin-node: VERSION munin-node.in plugins/* munin-node.conf
 	@VERSION=$$(cat VERSION); \
