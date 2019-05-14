@@ -13,21 +13,37 @@ MuninLite is Copyright (C) 2007 Rune Nordbøe Skillingstad
 Features
 --------
 
-MuninLite implements the following plugins:
+This MuninLite implements the following plugins:
 
-* df 
-* cpu 
-* if_ 
-* if_err_ 
-* load 
-* memory
-* processes
-* swap
-* netstat
-* uptime
-* interrupts
-* irqstats
-* owswitch (optional)
+* cpu : CPU usage
+* df : Filesystem usage
+* entropy : entropy pool size
+* forks : forks per second
+* fw_ : Firewall counters (note, needs iptables chains that end in "_counter")
+* if_ : network interface
+* if_err_ : network interface errors
+* interrupts : interrupts
+* irqstats : irq statistics
+* libvirt_blkbps : virsh block device bytes per sec
+* libvirt_blkiops : virsh block device IOps
+* libvirt_cpu : virsh vm CPU usage
+* libvirt_mem : virsh vm Memory usage
+* libvirt_netbps : virsh network bits per sec
+* libvirt_netpkts : virsh network packets per sec
+* load : system load
+* memory : memory usage
+* netbps : summary network bits per sec
+* neterr : summary network errors
+* netstat : netstat plugin
+* ntpdate : ntp time offset
+* owswitch_ : OpenWRT switch stats
+* plugindir_ : load plugins from directory
+* proc_pri : process priority
+* processes : process state
+* sensors : read temperature sensors
+* swap : swap in/out
+* uptime : uptime/availability
+* vgs : volume group stats
 
 Included files
 --------------
@@ -47,19 +63,6 @@ Included files
 |examples/inetd.busybox		|Sample inetd.conf configuration for busybox
 |examples/hosts.deny		|Sample hosts.deny configuration
 |examples/hosts.allow		|Sample hosts.allow configuration
-|plugins/cpu			|CPU usage plugin
-|plugins/df			|Filesystem usage plugin
-|plugins/if_			|Network interface traffic plugin
-|plugins/if_err_		|Network interface errors plugin
-|plugins/interrupts		|Interrupts & context switches plugin
-|plugins/irqstats		|Individual interrupts plugin
-|plugins/load			|Load average plugin
-|plugins/memory			|Memory usage plugin
-|plugins/netstat		|Netstat plugin
-|plugins/processes		|Number of Processes plugin
-|plugins/swap			|Swap in/out plugin
-|plugins/uptime			|Uptime plugin
-|plugins/owswitch		|OpenWRT switch plugin (not used by default)
 
 Build requirements
 ------------------
