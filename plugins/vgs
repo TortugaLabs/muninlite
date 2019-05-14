@@ -20,7 +20,10 @@ config_vgs() {
   get_vg_data | while read vgname onepct usage
   do
     vgid=$(echo "$vgname" |tr -sc A-Za-z0-9 _)
-    echo "$vgid.label $vgname"
+    vgx=$(vgs --noheadings  -o vg_size,vg_free "$vgname")
+    echo "$vgid.label $vgname ($(echo "$vgx" | awk '{print $1}'))"
+    echo "$vgid.info $(echo "$vgx" | awk '{print $2}') free"
+
     if [ $onepct -lt 10000000 ] ; then # 1% is less than 10G
       echo "$vgid.warning 92"
       echo "$vgid.critical 98"
