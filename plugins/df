@@ -30,8 +30,8 @@ graph_info This graph shows disk usage on the machine."
       echo "$PNAME.warning 92"
       echo "$PNAME.critical 98"
     else
-      echo "$PNAME.warning 97"
-      echo "$PNAME.critical 98"
+      echo "$PNAME.warning 98"
+      echo "$PNAME.critical 99"
     fi
   done
 }
