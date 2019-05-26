@@ -28,8 +28,8 @@ config_vgs() {
       echo "$vgid.warning 92"
       echo "$vgid.critical 98"
     else
-      echo "$vgid.warning 97"
-      echo "$vgid.critical 98"
+      echo "$vgid.warning 98"
+      echo "$vgid.critical 99"
     fi
   done
 }
