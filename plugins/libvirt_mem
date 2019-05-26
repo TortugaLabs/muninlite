@@ -12,9 +12,9 @@ config_libvirt_mem() {
   cat <<-_EOF_
 	graph_title VM Memory Usage
 	graph_args $graph_opts
-	graph_vlabel kB
+	graph_vlabel MB
 	graph_scale no
-	graph_info This graph shows Memory consumption in kB
+	graph_info This graph shows Memory consumption in MB
 	graph_category virtualization
 	graph_period second
 	_EOF_
@@ -31,16 +31,16 @@ config_libvirt_mem() {
     cat <<-_EOF_
 	$vmlabel.label $vmname
 	$vmlabel.draw $type
-	$vmlabel.info Memory usage in kB for $vmname ($vmid)
+	$vmlabel.info Memory usage in MB for $vmname ($vmid)
 	_EOF_
     type=STACK
   done
 }
 fetch_libvirt_mem() {
-  awk '$1 == "MemTotal:" { print "totalmem.value",$2 }' /proc/meminfo
+  awk '$1 == "MemTotal:" { print "totalmem.value",int($2)/1024.0 }' /proc/meminfo
   for vmid in $(virsh list --uuid)
   do
     vmname=v$(virsh domname "$vmid"| tr -sc A-Za-z0-9 _)
-    echo "$vmname.value $(virsh dominfo $vmid | awk -vFS=: '$1 == "Used memory" {print int($2)}')"
+    echo "$vmname.value $(virsh dominfo $vmid | awk -vFS=: '$1 == "Used memory" {print int($2)/1024.0}')"
   done
 }
