@@ -1,3 +1,11 @@
+#!/bin/sh
+
+if is_plugin_enabled "netstat" ; then
+  if ! netstat -s >/dev/null 2>&1; then
+    remove_plugin netstat
+  fi
+fi
+
 config_netstat() {
   echo "graph_title Netstat"
   echo "graph_args -l 0 --base 1000"

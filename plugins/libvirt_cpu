@@ -1,0 +1,40 @@
+#!/bin/sh
+config_libvirt_cpu() {
+  #~ NCPU=$(($(grep '^cpu. ' /proc/stat | wc -l) - 1))
+  #~ if [ $NCPU = 0 ]; then NCPU=1; fi
+  #~ PERCENT=$(($NCPU * 100))
+  #~ graphlimit=$PERCENT
+  #~ graph_opts="--base 1000 -r --lower-limit 0 --upper-limit $graphlimit"
+  graph_opts="--base 1000"
+
+  cat <<-_EOF_
+	graph_title VM CPU Usage
+	graph_args $graph_opts
+	graph_vlabel %
+	graph_scale no
+	graph_info This graph shows vCPU consumption
+	graph_category virtualization
+	graph_period second
+	_EOF_
+  type=AREA
+  for vmid in $(virsh list --uuid)
+  do
+    vmname=$(virsh domname "$vmid")
+    vmlabel=v$(echo $vmname | tr -sc A-Za-z0-9 _)
+    cat <<-_EOF_
+	$vmlabel.label $vmname
+	$vmlabel.draw $type
+	$vmlabel.type DERIVE
+	$vmlabel.min 0
+	$vmlabel.info CPU time for $vmname ($vmid)
+	_EOF_
+    type=STACK
+  done
+}
+fetch_libvirt_cpu() {
+  for vmid in $(virsh list --uuid)
+  do
+    vmname=v$(virsh domname "$vmid"| tr -sc A-Za-z0-9 _)
+    echo "$vmname.value $(virsh dominfo $vmid | awk -vFS=: '$1 == "CPU time" {print int($2 * 100)}')"
+  done
+}

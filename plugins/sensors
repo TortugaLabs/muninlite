@@ -1,0 +1,45 @@
+#!/bin/sh
+
+config_sensors() {
+  cat <<-_EOF_
+	graph_title System Temperature
+	graph_args --base 1000 -l 0
+	graph_vlabel C
+	graph_scale no
+	graph_category system
+	graph_info Temperature of various components, in C
+	_EOF_
+  sensors | grep high | while read ln
+  do
+    name=$(echo $ln | cut -d: -f1)
+    id=$(echo $name| tr -sc A-Za-z0-9 _)
+    echo "$id.label $name"
+    echo "$id.warning $(echo $ln | cut -d+ -f3 | cut -d. -f1)"
+    echo "$id.critical $(echo $ln | cut -d+ -f4 | cut -d. -f1)"
+  done
+  for hdd in /dev/sd?
+  do
+    res=$(smartctl -a $hdd | awk '$1 == 194 { print $10}')
+    if [ -n "$res" ] ; then
+      id=$(echo $hdd| tr -sc A-Za-z0-9 _)
+      echo "$id.label $hdd"
+    fi
+  done
+}
+fetch_sensors() {
+  sensors | grep high | while read ln
+  do
+    name=$(echo $ln | cut -d: -f1)
+    id=$(echo $name| tr -sc A-Za-z0-9 _)
+    echo "$id.value $(echo $ln | cut -d: -f2 | cut -dC -f1 | tr -dc .0-9)"
+  done
+  for hdd in /dev/sd?
+  do
+    res=$(smartctl -a $hdd | awk '$1 == 194 { print $10}')
+    id=$(echo $hdd| tr -sc A-Za-z0-9 _)
+    if [ -n "$res" ] ; then
+      id=$(echo $hdd| tr -sc A-Za-z0-9 _)
+      echo "$id.value $res"
+    fi
+  done
+}

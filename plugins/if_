@@ -1,3 +1,18 @@
+#!/bin/sh
+#
+# Runtime configuration...
+#
+if is_plugin_enabled "if_" ; then
+  remove_plugin "if_"
+  for INTER in $(select_net_devs);
+  do
+    INTERRES=$(clean_net_dev_name $INTER)
+    add_plugin "if_$INTERRES"
+    eval "fetch_if_${INTERRES}() { fetch_if $INTER \$@; };"
+    eval "config_if_${INTERRES}() { config_if $INTER \$@; };"
+  done
+fi
+
 config_if() {
   echo "graph_order down up"
   echo "graph_title $1 traffic"
@@ -15,10 +30,12 @@ config_if() {
   echo "up.min 0"
   echo "up.negative down"
   echo "up.cdef up,8,*"
-  if ethtool $1 | grep -q Speed; then
-    MAX=$(($(ethtool $1 | grep Speed | sed -e 's/[[:space:]]\{1,\}/ /g' -e 's/^ //' -e 's/M.*//' | cut -d\  -f2) * 1000000))
-    echo "up.max $MAX"
-    echo "down.max $MAX"
+  if type ethtool >/dev/null 2>&1 ; then
+    if ethtool $1 | grep -q Speed; then
+      MAX=$(($(ethtool $1 | grep Speed | sed -e 's/[[:space:]]\{1,\}/ /g' -e 's/^ //' -e 's/M.*//' | cut -d\  -f2) * 1000000))
+      echo "up.max $MAX"
+      echo "down.max $MAX"
+    fi
   fi
 }
 fetch_if() {

@@ -27,6 +27,42 @@ clean_fieldname() {
   echo "$@" | sed -e 's/^[^A-Za-z_]/_/' -e 's/[^A-Za-z0-9_]/_/g'
 }
 
+# Check if plugin is enabled...
+is_plugin_enabled() {
+  echo "$PLUGINS" | grep -q "\b$1\b"
+}
+remove_plugin() {
+  local new="" i q=""
+  for i in $PLUGINS
+  do
+    if [ $i = "$1" ] ; then
+      continue
+    fi
+    new="$new$q$i"
+    q=" "
+  done
+  PLUGINS="$new"
+}
+add_plugin() {
+  PLUGINS=$(echo $PLUGINS $1 | tr ' ' '\n' | sort -u)
+}
+
+select_net_devs() {
+  grep '^ *[a-zA-Z0-9]\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g' | while read dev
+  do
+    [ -z "$dev" ] && continue || :
+    if [ x"$dev" = x"lo" ] ; then
+      continue
+    fi
+    echo "$dev"
+  done
+}
+
+clean_net_dev_name() {
+  echo "$@" | sed -e 's/\./VLAN/' -e 's/^[^A-Za-z_]/_/' -e 's/[^A-Za-z0-9_]/_/g'
+}
+
+
 # ===== PLUGINS CODE =====
 @@PLSTR@@
 
@@ -67,58 +103,21 @@ do_quit() {
   exit 0
 }
 
-# ===== Runtime config =====
-RES=""
-for PLUG in $PLUGINS
-do 
-  if [ "$PLUG" = "if_" ]; then  
-    for INTER in $(grep '^ *\(ppp\|eth\|wlan\|ath\|ra\|ipsec\)\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
-    do
-      INTERRES=$(echo $INTER | sed 's/\./VLAN/')
-      RES="$RES if_$INTERRES"
-      eval "fetch_if_${INTERRES}() { fetch_if $INTER $@; };"
-      eval "config_if_${INTERRES}() { config_if $INTER $@; };"
-    done
-  elif [ "$PLUG" = "if_err_" ]; then
-    for INTER in $(grep '^ *\(ppp\|eth\|wlan\|ath\|ra\|ipsec\)\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g');
-    do
-      INTERRES=$(echo $INTER | sed 's/\./VLAN/')
-      RES="$RES if_err_$INTERRES"
-      eval "fetch_if_err_${INTERRES}() { fetch_if_err $INTER $@; };"
-      eval "config_if_err_${INTERRES}() { config_if_err $INTER $@; };"
-    done
-  elif [ "$PLUG" = "netstat" ]; then
-    if netstat -s >/dev/null 2>&1; then
-      RES="$RES netstat"
-    fi
-  elif [ "$PLUG" = "plugindir_" ]; then
-    for MYPLUGIN in $(ls -1 $PLUGINPATTERN 2>/dev/null );
-    do
-      if [ -f $MYPLUGIN -a -x $MYPLUGIN ]; then
-        MYPLUGINNAME=$(basename $MYPLUGIN)
-        #ensure we don't have name collision
-        if echo "$RES" | grep "\b$MYPLUGINNAME\b" >/dev/null 2>&1 ; then
-          MYPLUGINNAME="plugindir_$MYPLUGINNAME"
-        fi
-        RES="$RES $MYPLUGINNAME"
-        eval "fetch_${MYPLUGINNAME}() { $MYPLUGIN ; };"
-        eval "config_${MYPLUGINNAME}() { $MYPLUGIN config ; };"
-      fi
-    done
-  else
-    RES="$RES $PLUG";
-  fi
-done
-PLUGINS=$RES
-
 # ===== MAIN LOOP =====
 FUNCTIONS="list nodes config fetch version quit"
-HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+if [ -f /etc/openwrt_release ] ; then
+  HOSTNAME=$(/sbin/uci get "system.@system[0].hostname" 2>/dev/null || cat /proc/sys/kernel/hostname)
+else
+  HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+fi
 echo "# munin node at $HOSTNAME"
 while read arg0 arg1 
 do 
   arg0=$(echo "$arg0" | xargs)
-  arg1=$(echo "$arg1" | xargs)  
+  arg1=$(echo "$arg1" | xargs)
+  if [ -z "$arg0" ] ; then
+    continue
+  fi
   if ! echo "$FUNCTIONS" | grep "\b$arg0\b" >/dev/null 2>&1 ; then
     echo "# Unknown command. Try" $(echo "$FUNCTIONS" | sed -e 's/\( [[:alpha:]]\{1,\}\)/,\1/g' -e 's/,\( [[:alpha:]]\{1,\}\)$/ or\1/')
     continue

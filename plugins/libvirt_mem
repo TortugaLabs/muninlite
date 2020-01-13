@@ -1,0 +1,46 @@
+#!/bin/sh
+config_libvirt_mem() {
+
+  
+  #~ NCPU=$(($(grep '^cpu. ' /proc/stat | wc -l) - 1))
+  #~ if [ $NCPU = 0 ]; then NCPU=1; fi
+  #~ PERCENT=$(($NCPU * 100))
+  #~ graphlimit=$PERCENT
+  #~ graph_opts="--base 1000 -r --lower-limit 0 --upper-limit $graphlimit"
+  graph_opts="--base 1000"
+
+  cat <<-_EOF_
+	graph_title VM Memory Usage
+	graph_args $graph_opts
+	graph_vlabel MB
+	graph_scale no
+	graph_info This graph shows Memory consumption in MB
+	graph_category virtualization
+	graph_period second
+	_EOF_
+  cat <<-_EOF_
+	totalmem.label Total
+	totalmem.draw LINE1
+	totalmem.info Total physical memory
+	_EOF_
+  type=AREA
+  for vmid in $(virsh list --uuid)
+  do
+    vmname=$(virsh domname "$vmid")
+    vmlabel=v$(echo $vmname | tr -sc A-Za-z0-9 _)
+    cat <<-_EOF_
+	$vmlabel.label $vmname
+	$vmlabel.draw $type
+	$vmlabel.info Memory usage in MB for $vmname ($vmid)
+	_EOF_
+    type=STACK
+  done
+}
+fetch_libvirt_mem() {
+  awk '$1 == "MemTotal:" { print "totalmem.value",int($2)/1024.0 }' /proc/meminfo
+  for vmid in $(virsh list --uuid)
+  do
+    vmname=v$(virsh domname "$vmid"| tr -sc A-Za-z0-9 _)
+    echo "$vmname.value $(virsh dominfo $vmid | awk -vFS=: '$1 == "Used memory" {print int($2)/1024.0}')"
+  done
+}

@@ -1,2 +1,15 @@
 * Homepage
 * Documentation
+
+Plugins:
+- rationalize processes + proc_pri
+- virt show memory (+ aval total mem)
+  
+CN2:
+PLUGINS="df cpu load memory forks processes proc_pri uptime interrupts libvirt_cpu libvirt_netbps libvirt_netpkts libvirt_blkiops libvirt_blkbps libvirt_mem netbps neterr vgs entropy sensors"
+VM:
+PLUGINS="df cpu load memory forks processes proc_pri uptime interrupts if_"
+Firewall:
+PLUGINS="df cpu load memory forks processes proc_pri uptime interrupts if_ fw_"
+
+

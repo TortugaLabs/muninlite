@@ -1,5 +1,5 @@
 config_interrupts() {
-  echo "graph_title Interrupts & context switches"
+  echo "graph_title Interrupts and context switches"
   echo "graph_args --base 1000 -l 0"
   echo "graph_vlabel interrupts & ctx switches / \${graph_period}"
   echo "graph_category system"
