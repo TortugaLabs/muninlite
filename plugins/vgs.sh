@@ -1,13 +1,18 @@
 #!/bin/sh
 
+if is_plugin_enabled "vgs" ; then
+  if [ $EUID -gt 0 ] ; then
+    remove_plugin "vgs"
+  fi
+fi
+
 get_vg_data() {
   vgs --noheadings --units k -o vg_name,vg_size,vg_free | awk '
-	{
-	  printf "%s %d %.2f\n",$1,$2/100,100-$3*100/$2
-	}
-	'
+  {
+    printf "%s %d %.2f\n",$1,$2/100,100-$3*100/$2
+  }
+  '
 }
-
 
 config_vgs() {
   cat <<-_EOF_

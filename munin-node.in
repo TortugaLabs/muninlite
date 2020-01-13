@@ -1,27 +1,29 @@
 #!/bin/sh
 #
-# Simple Bourne Shell script that implements Munin protocoll and 
+# Simple Bourne Shell script that implements Munin protocol and 
 # some common Linux plugins.
 #
-# For latest version, see http://muninlite.sf.net/
+# For latest ORIGINAL version, see http://muninlite.sf.net/
+# For latest FORKED version, see https://github.com/TortugaLabs/muninlite
 #
 # Copyright (c) 2007-2011 Rune Nordbøe Skillingstad <rune@skillingstad.no>
+# Copyright (c) 2019 A Liu Ly
 # 
 # Licensed under GPLv2 (see LICENSE file for full License)
 #
-# $Id: $
-#
+set -euf -o pipefail
 
 VERSION="@@VERSION@@"
 
-@@CONF@@
-
-# if plugindir_ is present in $PLUGINS,
-# iexecutables (scripts, binaries) matching the following pattern will be scanned and operated as plugins
-PLUGINPATTERN=$(dirname $0)"/munin-node-plugin.d/*"
-
 # Remove unwanted plugins from this list
-PLUGINS="@@PLUGINS@@"
+if [ -f /etc/openwrt_release ] ; then
+  HOSTNAME=$(/sbin/uci get "system.@system[0].hostname" 2>/dev/null || cat /proc/sys/kernel/hostname)
+else
+  HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+fi
+[ -z "${PLUGINS:-}" ] && PLUGINS="df cpu load memory forks processes proc_pri interrupts"
+NODES="$HOSTNAME"
+
 # ===== LIB FUNCTIONS =====
 clean_fieldname() {
   echo "$@" | sed -e 's/^[^A-Za-z_]/_/' -e 's/[^A-Za-z0-9_]/_/g'
@@ -46,6 +48,87 @@ remove_plugin() {
 add_plugin() {
   PLUGINS=$(echo $PLUGINS $1 | tr ' ' '\n' | sort -u)
 }
+check_fn() {
+  type "$1" >/dev/null 2>&1
+}
+
+check_service() {
+  check_fn config_"${1}" || return 1
+  check_fn fetch_"${1}" || return 1
+  # Check if it is a valid plugin on the default node
+  (echo "$PLUGINS" | grep -q "\b${1}\b") && return 0
+  # Otherwise check nodes...
+  local node
+  for node in $NODES
+  do
+    check_fn node_"$node" || continue
+    (node_"$node" | grep -q "\b${1}\b") && return 0
+  done
+  return 1
+}
+
+# ===== MUNIN-NODE PROTOCOL FUNCTIONS =====
+
+do_list() {
+  if [ $# -gt 0 ] ; then
+    if check_fn "node_${1}" ; then
+      "node_${1}"
+      return $?
+    fi
+  fi
+  echo "$PLUGINS"
+}
+
+do_nodes() {
+  echo "$NODES"
+  echo "."
+}
+
+do_config() {
+  if check_service "${1}" ; then
+    "config_${1}"
+  else
+    echo "# Unknown service"
+  fi
+  echo "."
+}
+
+do_fetch() {
+  if check_service "${1}" ; then
+    "fetch_${1}"
+  else
+    echo "# Unknow service"
+  fi
+  echo "."
+}
+
+do_version() {
+  echo "munins node on $HOSTNAME version: $VERSION (munin-lite)"
+}
+
+do_quit() {
+  exit 0
+}
+
+main_loop() {
+  FUNCTIONS="list nodes config fetch version quit"
+  echo "# munin node at $HOSTNAME"
+  while read arg0 arg1 
+  do 
+    arg0=$(echo "$arg0" | xargs)
+    arg1=$(echo "$arg1" | xargs)
+    if [ -z "$arg0" ] ; then
+      continue
+    fi
+    if ! echo "$FUNCTIONS" | grep "\b$arg0\b" >/dev/null 2>&1 ; then
+      echo "# Unknown command. Try" $(echo "$FUNCTIONS" | sed -e 's/\( [[:alpha:]]\{1,\}\)/,\1/g' -e 's/,\( [[:alpha:]]\{1,\}\)$/ or\1/')
+      continue
+    fi
+    "do_$arg0" $arg1
+  done 
+}
+
+# ===== COMMON LIB FUNCTIONS ====
 
 select_net_devs() {
   grep '^ *[a-zA-Z0-9]\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g' | while read dev
@@ -62,67 +145,8 @@ clean_net_dev_name() {
   echo "$@" | sed -e 's/\./VLAN/' -e 's/^[^A-Za-z_]/_/' -e 's/[^A-Za-z0-9_]/_/g'
 }
 
-
-# ===== PLUGINS CODE =====
-@@PLSTR@@
-
-# ===== NODE CODE =====
-do_list() {
-  echo $PLUGINS
-}
-
-
-do_nodes() {
-  echo "$HOSTNAME"
-  echo "."
-}
-
-do_config() {
-  if echo "$PLUGINS" | grep "\b$1\b" >/dev/null 2>&1; then
-    config_$1
-  else
-    echo "# Unknown service"
-  fi
-  echo "."
-}
-
-do_fetch() {
-  if echo "$PLUGINS" | grep "\b$1\b" >/dev/null 2>&1; then
-    fetch_$1
-  else
-    echo "# Unknown service"
-  fi
-  echo "."
-}
-
-do_version() {
-  echo "munins node on $HOSTNAME version: $VERSION (munin-lite)"
-}
-
-do_quit() {
-  exit 0
-}
-
-# ===== MAIN LOOP =====
-FUNCTIONS="list nodes config fetch version quit"
-if [ -f /etc/openwrt_release ] ; then
-  HOSTNAME=$(/sbin/uci get "system.@system[0].hostname" 2>/dev/null || cat /proc/sys/kernel/hostname)
-else
-  HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+# ===== RUN-TIME CONFIGURATION ====
+if [ -f /etc/muninlite.conf ] ; then
+  . /etc/muninlite.conf
 fi
-echo "# munin node at $HOSTNAME"
-while read arg0 arg1 
-do 
-  arg0=$(echo "$arg0" | xargs)
-  arg1=$(echo "$arg1" | xargs)
-  if [ -z "$arg0" ] ; then
-    continue
-  fi
-  if ! echo "$FUNCTIONS" | grep "\b$arg0\b" >/dev/null 2>&1 ; then
-    echo "# Unknown command. Try" $(echo "$FUNCTIONS" | sed -e 's/\( [[:alpha:]]\{1,\}\)/,\1/g' -e 's/,\( [[:alpha:]]\{1,\}\)$/ or\1/')
-    continue
-  fi
-  
-  do_$arg0 $arg1
-done 
 

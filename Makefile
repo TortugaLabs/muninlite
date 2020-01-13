@@ -1,27 +1,28 @@
-
-
-PLUGINS=df cpu if_ if_err_ load memory processes swap netstat uptime interrupts irqstats ntpdate plugindir_
-#PLUGINS=cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats
-#make PLUGINS="df cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats"
+PLUGINS=$(wildcard plugins/*.sh)
 MUNIN_NODE = munin-node
 
-$(MUNIN_NODE): VERSION munin-node.in plugins/* munin-node.conf
+$(MUNIN_NODE): VERSION munin-node.in $(PLUGINS)
 	@VERSION=$$(cat VERSION); \
-	CONF=$$(grep -v '^#' munin-node.conf); \
 	echo "Making munin-node for muninlite version $$VERSION"; \
-	PLSTR=""; \
-	for PLGIN in $(PLUGINS); \
-	do \
-	  echo "Adding plugin $$PLGIN"; \
-	  PLSTR=$$(echo "$$PLSTR"; grep -v '^#' plugins/$$PLGIN); \
-	done; \
-	PLSTR=$$(echo "$$PLSTR" | sed -e 's/\\/\\\\/g' \
-		      	            -e 's/\//\\\//g' \
-				    -e 's/\$$/\\$$/g'); \
-	perl -p -e \
-	  "s/\@\@VERSION\@\@/$$VERSION/;s/\@\@CONF\@\@/$$CONF/;s/\@\@PLUGINS\@\@/$(PLUGINS)/;s/\@\@PLSTR\@\@/$$PLSTR/;" \
-	  munin-node.in > $(MUNIN_NODE)
+	( sed -e "s/\@\@VERSION\@\@/$$VERSION/" munin-node.in ; \
+	  cat plugins/*.sh ; \
+	  echo main_loop) > $(MUNIN_NODE)
 	@chmod +x $(MUNIN_NODE)
+	
+	
+#~ 	PLSTR=""; \
+#~ 	for PLGIN in $(PLUGINS); \
+#~ 	do \
+#~ 	  echo "Adding plugin $$PLGIN"; \
+#~ 	  PLSTR=$$(echo "$$PLSTR"; grep -v '^#' plugins/$$PLGIN); \
+#~ 	done; \
+#~ 	PLSTR=$$(echo "$$PLSTR" | sed -e 's/\\/\\\\/g' \
+#~ 		      	            -e 's/\//\\\//g' \
+#~ 				    -e 's/\$$/\\$$/g'); \
+#~ 	perl -p -e \
+#~ 	  "s/\@\@VERSION\@\@/$$VERSION/;s/\@\@CONF\@\@/$$CONF/;s/\@\@PLUGINS\@\@/$(PLUGINS)/;s/\@\@PLSTR\@\@/$$PLSTR/;" \
+#~ 	  munin-node.in > $(MUNIN_NODE)
+#~ 	@chmod +x $(MUNIN_NODE)
 
 	
 all: $(MUNIN_NODE)

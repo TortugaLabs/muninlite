@@ -1,21 +1,21 @@
 config_memory() {
-  MINFO=$(cat /proc/meminfo | sed 's/ \{1,\}/ /g;')
-  MEMTOTAL=$(echo "$MINFO" | grep "^MemTotal:" | cut -d\  -f2)
-  PAGETABLES=$(echo "$MINFO" | grep "^PageTables:" | cut -d\  -f2)
-  SWAPCACHED=$(echo "$MINFO" | grep "^SwapCached:" | cut -d\  -f2)
-  SWAPTOTAL=$(echo "$MINFO" | grep "^SwapTotal:" | cut -d\  -f2)
-  VMALLOCUSED=$(echo "$MINFO" | grep "^VmallocUsed:" | cut -d\  -f2)
-  SLAB=$(echo "$MINFO" | grep "^Slab:" | cut -d\  -f2)
-  MAPPED=$(echo "$MINFO" | grep "^Mapped:" | cut -d\  -f2)
-  COMMITTEDAS=$(echo "$MINFO" | grep "^Committed_AS:" | cut -d\  -f2)
-  ACTIVE=$(echo "$MINFO" | grep "^Active:" | cut -d\  -f2)
-  INACTIVE=$(echo "$MINFO" | grep "^Inactive:" | cut -d\  -f2)
-  ACTIVEANON=$(echo "$MINFO" | grep "^ActiveAnon:" | cut -d\  -f2)
-  ACTIVECACHE=$(echo "$MINFO" | grep "^ActiveCache:" | cut -d\  -f2)
-  INACTIVE=$(echo "$MINFO" | grep "^Inactive:" | cut -d\  -f2)
-  INACTDIRTY=$(echo "$MINFO" | grep "^Inact_dirty:" | cut -d\  -f2)
-  INACTLAUNDY=$(echo "$MINFO" | grep "^Inact_laundry:" | cut -d\  -f2)
-  INACTCLEAN=$(echo "$MINFO" | grep "^Inact_clean:" | cut -d\  -f2)
+  MINFO=$(cat /proc/meminfo | sed 's/ \{1,\}/ /g;') || :
+  MEMTOTAL=$(echo "$MINFO" | grep "^MemTotal:" | cut -d\  -f2) || :
+  PAGETABLES=$(echo "$MINFO" | grep "^PageTables:" | cut -d\  -f2) || :
+  SWAPCACHED=$(echo "$MINFO" | grep "^SwapCached:" | cut -d\  -f2) || :
+  SWAPTOTAL=$(echo "$MINFO" | grep "^SwapTotal:" | cut -d\  -f2) || :
+  VMALLOCUSED=$(echo "$MINFO" | grep "^VmallocUsed:" | cut -d\  -f2) || :
+  SLAB=$(echo "$MINFO" | grep "^Slab:" | cut -d\  -f2) || :
+  MAPPED=$(echo "$MINFO" | grep "^Mapped:" | cut -d\  -f2) || :
+  COMMITTEDAS=$(echo "$MINFO" | grep "^Committed_AS:" | cut -d\  -f2) || :
+  ACTIVE=$(echo "$MINFO" | grep "^Active:" | cut -d\  -f2) || :
+  INACTIVE=$(echo "$MINFO" | grep "^Inactive:" | cut -d\  -f2) || :
+  ACTIVEANON=$(echo "$MINFO" | grep "^ActiveAnon:" | cut -d\  -f2) || :
+  ACTIVECACHE=$(echo "$MINFO" | grep "^ActiveCache:" | cut -d\  -f2) || :
+  INACTIVE=$(echo "$MINFO" | grep "^Inactive:" | cut -d\  -f2) || :
+  INACTDIRTY=$(echo "$MINFO" | grep "^Inact_dirty:" | cut -d\  -f2) || :
+  INACTLAUNDRY=$(echo "$MINFO" | grep "^Inact_laundry:" | cut -d\  -f2) || :
+  INACTCLEAN=$(echo "$MINFO" | grep "^Inact_clean:" | cut -d\  -f2) || :
 
   GRAPH_ORDER="apps";
   test "$PAGETABLES" != "" && GRAPH_ORDER="$GRAPH_ORDER page_tables"
@@ -109,28 +109,28 @@ config_memory() {
   fi
 }
 fetch_memory() {
-  MINFO=$(cat /proc/meminfo | sed 's/ \{1,\}/ /g;')
-  MEMTOTAL=$(echo "$MINFO" | grep "^MemTotal:" | cut -d\  -f2)
-  MEMFREE=$(echo "$MINFO" | grep "^MemFree:" | cut -d\  -f2)
-  BUFFERS=$(echo "$MINFO" | grep "^Buffers:" | cut -d\  -f2)
-  CACHED=$(echo "$MINFO" | grep "^Cached:" | cut -d\  -f2)
-  SWAP_TOTAL=$(echo "$MINFO" | grep "^SwapTotal:" | cut -d\  -f2)
-  SWAP_FREE=$(echo "$MINFO" | grep "^SwapFree:" | cut -d\  -f2)
-  MEMTOTAL=$(echo "$MINFO" | grep "^MemTotal:" | cut -d\  -f2)
-  PAGETABLES=$(echo "$MINFO" | grep "^PageTables:" | cut -d\  -f2)
-  SWAPCACHED=$(echo "$MINFO" | grep "^SwapCached:" | cut -d\  -f2)
-  VMALLOCUSED=$(echo "$MINFO" | grep "^VmallocUsed:" | cut -d\  -f2)
-  SLAB=$(echo "$MINFO" | grep "^Slab:" | cut -d\  -f2)
-  MAPPED=$(echo "$MINFO" | grep "^Mapped:" | cut -d\  -f2)
-  COMMITTEDAS=$(echo "$MINFO" | grep "^Committed_AS:" | cut -d\  -f2)
-  ACTIVE=$(echo "$MINFO" | grep "^Active:" | cut -d\  -f2)
-  INACTIVE=$(echo "$MINFO" | grep "^Inactive:" | cut -d\  -f2)
-  ACTIVEANON=$(echo "$MINFO" | grep "^ActiveAnon:" | cut -d\  -f2)
-  ACTIVECACHE=$(echo "$MINFO" | grep "^ActiveCache:" | cut -d\  -f2)
-  INACTIVE=$(echo "$MINFO" | grep "^Inactive:" | cut -d\  -f2)
-  INACTDIRTY=$(echo "$MINFO" | grep "^Inact_dirty:" | cut -d\  -f2)
-  INACTLAUNDY=$(echo "$MINFO" | grep "^Inact_laundry:" | cut -d\  -f2)
-  INACTCLEAN=$(echo "$MINFO" | grep "^Inact_clean:" | cut -d\  -f2)
+  MINFO=$(cat /proc/meminfo | sed 's/ \{1,\}/ /g;') || :
+  MEMTOTAL=$(echo "$MINFO" | grep "^MemTotal:" | cut -d\  -f2) || :
+  MEMFREE=$(echo "$MINFO" | grep "^MemFree:" | cut -d\  -f2) || :
+  BUFFERS=$(echo "$MINFO" | grep "^Buffers:" | cut -d\  -f2) || :
+  CACHED=$(echo "$MINFO" | grep "^Cached:" | cut -d\  -f2) || :
+  SWAP_TOTAL=$(echo "$MINFO" | grep "^SwapTotal:" | cut -d\  -f2) || :
+  SWAP_FREE=$(echo "$MINFO" | grep "^SwapFree:" | cut -d\  -f2) || :
+  MEMTOTAL=$(echo "$MINFO" | grep "^MemTotal:" | cut -d\  -f2) || :
+  PAGETABLES=$(echo "$MINFO" | grep "^PageTables:" | cut -d\  -f2) || :
+  SWAPCACHED=$(echo "$MINFO" | grep "^SwapCached:" | cut -d\  -f2) || :
+  VMALLOCUSED=$(echo "$MINFO" | grep "^VmallocUsed:" | cut -d\  -f2) || :
+  SLAB=$(echo "$MINFO" | grep "^Slab:" | cut -d\  -f2) || :
+  MAPPED=$(echo "$MINFO" | grep "^Mapped:" | cut -d\  -f2) || :
+  COMMITTEDAS=$(echo "$MINFO" | grep "^Committed_AS:" | cut -d\  -f2) || :
+  ACTIVE=$(echo "$MINFO" | grep "^Active:" | cut -d\  -f2) || :
+  INACTIVE=$(echo "$MINFO" | grep "^Inactive:" | cut -d\  -f2) || :
+  ACTIVEANON=$(echo "$MINFO" | grep "^ActiveAnon:" | cut -d\  -f2) || :
+  ACTIVECACHE=$(echo "$MINFO" | grep "^ActiveCache:" | cut -d\  -f2) || :
+  INACTIVE=$(echo "$MINFO" | grep "^Inactive:" | cut -d\  -f2) || :
+  INACTDIRTY=$(echo "$MINFO" | grep "^Inact_dirty:" | cut -d\  -f2) || :
+  INACTLAUNDRY=$(echo "$MINFO" | grep "^Inact_laundry:" | cut -d\  -f2) || :
+  INACTCLEAN=$(echo "$MINFO" | grep "^Inact_clean:" | cut -d\  -f2) || :
   APPS=$(($MEMTOTAL - $MEMFREE - $BUFFERS - $CACHED))
   SWAP=$(($SWAP_TOTAL - $SWAP_FREE))
   echo "buffers.value" $(($BUFFERS * 1024))
