@@ -3,8 +3,9 @@
 PLUGINS=df cpu if_ if_err_ load memory processes swap netstat uptime interrupts irqstats ntpdate plugindir_
 #PLUGINS=cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats
 #make PLUGINS="df cpu if_ if_err_ load memory processes netstat uptime interrupts irqstats"
+MUNIN_NODE = munin-node
 
-munin-node: VERSION munin-node.in plugins/* munin-node.conf
+$(MUNIN_NODE): VERSION munin-node.in plugins/* munin-node.conf
 	@VERSION=$$(cat VERSION); \
 	CONF=$$(grep -v '^#' munin-node.conf); \
 	echo "Making munin-node for muninlite version $$VERSION"; \
@@ -19,15 +20,15 @@ munin-node: VERSION munin-node.in plugins/* munin-node.conf
 				    -e 's/\$$/\\$$/g'); \
 	perl -p -e \
 	  "s/\@\@VERSION\@\@/$$VERSION/;s/\@\@CONF\@\@/$$CONF/;s/\@\@PLUGINS\@\@/$(PLUGINS)/;s/\@\@PLSTR\@\@/$$PLSTR/;" \
-	  munin-node.in > munin-node
-	@chmod +x munin-node
+	  munin-node.in > $(MUNIN_NODE)
+	@chmod +x $(MUNIN_NODE)
 
 	
-all: munin-node
+all: $(MUNIN_NODE)
      
 clean-node:
 	@echo "Removing munin-node"
-	@rm -f munin-node
+	@rm -f $(MUNIN_NODE)
 
 clean-tgz: 
 	@echo "Old releases"
