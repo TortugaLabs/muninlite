@@ -21,7 +21,7 @@ if [ -f /etc/openwrt_release ] ; then
 else
   HOSTNAME=$(hostname -f 2>/dev/null || hostname)
 fi
-[ -z "${PLUGINS:-}" ] && PLUGINS="df cpu load memory forks processes proc_pri interrupts"
+[ -z "${PLUGINS:-}" ] && PLUGINS="cpu df forks interrupts load memory netbps neterr processes proc_pri sensors"
 NODES="$HOSTNAME"
 
 # ===== LIB FUNCTIONS =====
@@ -46,7 +46,7 @@ remove_plugin() {
   PLUGINS="$new"
 }
 add_plugin() {
-  PLUGINS=$(echo $PLUGINS $1 | tr ' ' '\n' | sort -u)
+  PLUGINS=$(echo $PLUGINS $1 | tr ' ' '\n' | sort -u|tr '\n' ' ')
 }
 check_fn() {
   type "$1" >/dev/null 2>&1
