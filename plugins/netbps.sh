@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+
 config_netbps() {
   echo "graph_order down up"
   echo "graph_title Network traffic"
@@ -17,10 +17,33 @@ config_netbps() {
   echo "up.negative down"
 }
 fetch_netbps() {
-  awk '
-    /:/ { down_cnt += $2 ; up_cnt += $10 }
-    END {
-      print "down.value",down_cnt
-      print "up.value",up_cnt
-    }' /proc/net/dev
+  if [ -n "${net_ifs:-}" ] ; then
+    # User specified target devices...
+    local kv k v awkscr='
+      BEGIN {
+        down_cnt = 0
+        up_cng = 0
+      }
+      END {
+        print "down.value", down_cnt
+        print "up.value",up_cnt
+      }
+    '
+    for kv in $net_ifs
+    do
+      k=$(echo $kv | cut -d: -f1)
+      v=$(echo $kv | cut -d: -f2)
+      awkscr="$awkscr
+          \$1 == \"$k:\" { down_cnt += \$2 ; up_cnt += \$10 }
+      "
+    done
+    awk "$awkscr" /proc/net/dev
+  else
+    awk '
+      /:/ { down_cnt += $2 ; up_cnt += $10 }
+      END {
+        print "down.value",down_cnt
+        print "up.value",up_cnt
+      }' /proc/net/dev
+  fi
 }
