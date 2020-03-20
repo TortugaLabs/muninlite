@@ -19,56 +19,60 @@ This MuninLite implements the following plugins:
 * df : Filesystem usage
 * entropy : entropy pool size
 * forks : forks per second
-* fw_ : Firewall counters (note, needs iptables chains that end in "_counter")
 * if_ : network interface
 * if_err_ : network interface errors
 * interrupts : interrupts
 * irqstats : irq statistics
+* load : system load
+* memory : memory usage
+* netbps : summary network bits per sec
+* neterr : summary network errors
+* ntpdate : ntp time offset
+* proc_pri : process priority
+* processes : process state
+* sensors : read temperature sensors
+* swap : swap in/out
+* vgs : volume group stats
+* xen : basic Xen VM and memory stats
+
+Work in progress:
+
+* fw_ : Firewall counters (note, needs iptables chains that end in "_counter")
 * libvirt_blkbps : virsh block device bytes per sec
 * libvirt_blkiops : virsh block device IOps
 * libvirt_cpu : virsh vm CPU usage
 * libvirt_mem : virsh vm Memory usage
 * libvirt_netbps : virsh network bits per sec
 * libvirt_netpkts : virsh network packets per sec
-* load : system load
-* memory : memory usage
-* netbps : summary network bits per sec
-* neterr : summary network errors
-* netstat : netstat plugin
-* ntpdate : ntp time offset
 * owswitch_ : OpenWRT switch stats
 * plugindir_ : load plugins from directory
-* proc_pri : process priority
-* processes : process state
-* sensors : read temperature sensors
-* swap : swap in/out
-* uptime : uptime/availability
-* vgs : volume group stats
 
 Included files
 --------------
 
 | File | Info
 |------|------
-|Changelog     			|Changelog 
-|CREDITS	      		|Credits to contributors
-|LICENSE			|GPLv2 License
-|Makefile			|Rules to make munin-node
-|README				|This file
-|TODO				|Things to do in future releases
-|VERSION			|Current version
-|munin-node.in			|The MuninLite script skeleton
+|CREDITS.md	|Credits to contributors
+|LICENSE	|GPLv2 License
+|Makefile	|Rules to make munin-node
+|README.md	|This file
+|VERSION	|Current version
+|munin-node.in	|The MuninLite script skeleton
+|listener.lua	|Small lua script to listen for connections and start a program
+|plugins	|plugin scripts used to grabbing system data
 |examples/xinetd.d/munin 	|Sample xinetd configuration
 |examples/inetd.conf		|Sample inetd.conf configuration
 |examples/inetd.busybox		|Sample inetd.conf configuration for busybox
 |examples/hosts.deny		|Sample hosts.deny configuration
 |examples/hosts.allow		|Sample hosts.allow configuration
+|doc/*		|Misc documentation (probably outdated)
+|_attic_/*	|Old stuff from previous versions
+|TODO		|Things to do in future releases
 
 Build requirements
 ------------------
 
 `Make`	     (Not sure what requirements)
-`Perl`         (even very old versions should work)
 
 Requirements
 ------------
@@ -82,35 +86,22 @@ Bourne Shell (`ash` or `dash` should be sufficient)
 |`cut`	     |(cut in busybox is sufficient)
 |`wc`	     |(wc in busybox is sufficient)
 |`xargs`     |(xargs in busybox is sufficient)
-|`inetd`     |(inetd in busybox is sufficient)
+|`inetd`     |(inetd in busybox is sufficient) or `lua` using `listener.lua`
 
 Installation
 ------------
 
 Download source and unpack it.
-Edit Makefile to suit your choice of plugins
 
 Make munin-node by running `"make"`
 
 ```
   # make
   Making munin-node for muninlite version 0.9.14
-  Adding plugin df
-  Adding plugin cpu
-  Adding plugin if_
-  Adding plugin if_err_
-  Adding plugin load
-  Adding plugin memory
-  Adding plugin processes
-  Adding plugin swap
-  Adding plugin netstat
-  Adding plugin uptime
-  Adding plugin interrupts
-  Adding plugin irqstats
 ```
 
 Copy munin-node to a suitable location (`/usr/local/bin/`) and make it
-executable (there will be a `"make install"` at a later release)
+executable.
 
 ```
   # cp munin-node /usr/local/bin
@@ -189,10 +180,16 @@ For inetd-test, try to telnet to munin port from allowed host.
 Plugin configuration 
 --------------------
 
-To configure which plugins should be enabled, locate the `PLUGINS`
-variable in `munin-node` and remove unwanted plugins.
+Create a `/etc/muninlite.conf` with config options.
 
-There is no specific configuration for plugins. 
+Specifically the variable `PLUGINS` contains a list of enabled plugins.
+Use the functions:
+
+- `is_plugin_enabled` : to check if a specific plugin is enabled
+- `remove_plugin` : to remove a plugin from the list
+- `add_plugin` : to enable a plugin (this make sure that plugins are not enabled twice)
+
+Otherwise, you can assign `PLUGINS` a space sparated list of plugins to enable.
 
 Munin configuration
 -------------------
@@ -205,3 +202,13 @@ munin-node.
     address 10.42.42.25
     use_node_name yes
 ```
+
+* * *
+
+Discontinued plugins:
+
+* netstat : netstat plugin
+  - Unable to make it work with current generation `netstat` replacements.
+* uptime : uptime/availability
+  - doesn't work as expected
+
