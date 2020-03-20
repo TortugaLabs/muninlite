@@ -34,7 +34,7 @@ fetch_netbps() {
     do
       k=$(echo $kv | cut -d: -f1)
       v=$(echo $kv | cut -d: -f2)
-      awkscr="$awksrc
+      awksrc="$awksrc
           \$1 == \"$k:\" { down_cnt += \$2 ; up_cnt += \$10 }
       "
     done
