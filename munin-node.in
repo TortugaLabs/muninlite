@@ -15,12 +15,12 @@ set -euf -o pipefail
 
 VERSION="@@VERSION@@"
 
-# Remove unwanted plugins from this list
 if [ -f /etc/openwrt_release ] ; then
   HOSTNAME=$(/sbin/uci get "system.@system[0].hostname" 2>/dev/null || cat /proc/sys/kernel/hostname)
 else
   HOSTNAME=$(hostname -f 2>/dev/null || hostname)
 fi
+
 [ -z "${PLUGINS:-}" ] && PLUGINS="cpu df forks interrupts load memory netbps neterr processes proc_pri sensors"
 NODES="$HOSTNAME"
 
