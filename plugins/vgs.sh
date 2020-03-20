@@ -9,9 +9,14 @@ fi
 get_vg_data() {
   vgs --noheadings --units k -o vg_name,vg_size,vg_free | awk '
   {
-    printf "%s %d %.2f\n",$1,$2/100,100-$3*100/$2
+    printf "%s %d %.2f %d\n",$1,$2/100,100-$3*100/$2,$2
   }
   '
+}
+vg_calc_threshold() {
+  local total="$1"
+  local val="$(expr "$2" '*' 1048576)" # Convert input to gigs
+  echo "$total $val" | awk '{ print "%f",100 - ($2/$1*100) }'
 }
 
 config_vgs() {
@@ -22,7 +27,7 @@ config_vgs() {
 	graph_category disk
 	graph_info This graph shows Volume Group usage on the machine.
 	_EOF_
-  get_vg_data | while read vgname onepct usage
+  get_vg_data | while read vgname onepct usage vsize
   do
     vgid=$(echo "$vgname" |tr -sc A-Za-z0-9 _)
     vgx=$(vgs --noheadings  -o vg_size,vg_free "$vgname")
@@ -33,14 +38,15 @@ config_vgs() {
       echo "$vgid.warning 92"
       echo "$vgid.critical 98"
     else
-      echo "$vgid.warning 98"
-      echo "$vgid.critical 99"
+      # For more than 100G, the tresholds are based actual storage (not fixed percentage)
+      echo "$vgid.warning $(vg_calc_threshold $vsize 20)"
+      echo "$vgid.critical $(vg_calc_threshold $vsize 2)"
     fi
   done
 }
 
 fetch_vgs() {
-  get_vg_data | while read vgname onepct usage
+  get_vg_data | while read vgname onepct usage vsize
   do
     vgid=$(echo "$vgname" |tr -sc A-Za-z0-9 _)
     echo "$vgid.value $usage"

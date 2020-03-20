@@ -17,33 +17,30 @@ config_netbps() {
   echo "up.negative down"
 }
 fetch_netbps() {
-  if [ -n "${net_ifs:-}" ] ; then
-    # User specified target devices...
-    local kv k v awkscr='
+  local awksrc='
       BEGIN {
         down_cnt = 0
-        up_cng = 0
+        up_cnt = 0
       }
       END {
-        print "down.value", down_cnt
-        print "up.value",up_cnt
+        printf "down.value %.0f\n", down_cnt
+        printf "up.value %.0f\n", up_cnt
       }
     '
+  if [ -n "${net_ifs:-}" ] ; then
+    # User specified target devices...
+    local kv k v
     for kv in $net_ifs
     do
       k=$(echo $kv | cut -d: -f1)
       v=$(echo $kv | cut -d: -f2)
-      awkscr="$awkscr
+      awkscr="$awksrc
           \$1 == \"$k:\" { down_cnt += \$2 ; up_cnt += \$10 }
       "
     done
-    awk "$awkscr" /proc/net/dev
   else
-    awk '
-      /:/ { down_cnt += $2 ; up_cnt += $10 }
-      END {
-        print "down.value",down_cnt
-        print "up.value",up_cnt
-      }' /proc/net/dev
+    awksrc="$awksrc
+        /:/ { down_cnt += \$2 ; up_cnt += \$10 }"
   fi
+  awk "$awksrc" /proc/net/dev
 }

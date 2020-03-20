@@ -1,9 +1,13 @@
 #!/bin/sh
 
+df_part_type() {
+  awk '$2 == "'"$1"'" { print $3 }' /proc/mounts
+}
 df_filter_fs() {
-  local fstype=$(awk '$2 == "'"$1"'" { print $3 }' /proc/mounts)
+  local fstype=$(df_part_type "$1")
   case "$fstype" in
   iso9660) return 1 ;;
+  squashfs) return 1 ;;
   esac 
   return 0
 }
@@ -15,7 +19,7 @@ df_calc_threshold() {
 }
 
 config_df() {
-  echo "graph_title xxFilesystem usage (in %)
+  echo "graph_title Filesystem usage (in %)
 graph_args --upper-limit 100 -l 0
 graph_vlabel %
 graph_category disk
@@ -26,7 +30,7 @@ graph_info This graph shows disk usage on the machine."
     PINFO=$(df -P $PART | tail -1)
     PNAME=$(echo $PINFO | cut -d\  -f1 | sed 's/\//_/g')
     PSIZE=$( (df -Ph $PART 2>/dev/null || df -P $PART)| tail -1 | awk '{print $2}')
-    PTYPE=$(df -PT $PART | tail -1 | awk '{print $2}')
+    PTYPE=$(df_part_type "$PART")
     PAVAIL=$( (df -Ph $PART 2>/dev/null || df -P $PART)| tail -1 | awk '{print $4}')
     echo "$PNAME.label $PART ($PSIZE)"
     echo "$PNAME.info $PNAME -> $PART $PAVAIL free ($PTYPE)"
@@ -47,6 +51,6 @@ fetch_df() {
     df_filter_fs $PART || continue
     PINFO=$(df -P $PART | tail -1);
     PNAME=$(echo $PINFO | cut -d\  -f1 | sed 's/[\/.-]/_/g')
-    echo "$PNAME.value" $(echo $PINFO | awk '{ print $3/$2*100 }')
+    echo "$PNAME.value" $(echo $PINFO | awk '{ v=$3/$2 * 100 ; if (v < 10.00) { printf "%.2f", v } else { print v }}')
   done
 }
