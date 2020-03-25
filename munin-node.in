@@ -18,7 +18,8 @@ VERSION="@@VERSION@@"
 if [ -f /etc/openwrt_release ] ; then
   HOSTNAME=$(/sbin/uci get "system.@system[0].hostname" 2>/dev/null || cat /proc/sys/kernel/hostname)
 else
-  HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+  #HOSTNAME=$(hostname -f 2>/dev/null || hostname)
+  HOSTNAME=$(hostname)
 fi
 
 [ -z "${PLUGINS:-}" ] && PLUGINS="cpu df forks interrupts load memory netbps neterr processes proc_pri sensors"
@@ -51,6 +52,9 @@ add_plugin() {
 check_fn() {
   type "$1" >/dev/null 2>&1
 }
+make_id() {
+  echo -n "$*" | tr -c '_A-Za-z0-9' _
+}
 
 check_service() {
   check_fn config_"${1}" || return 1
@@ -61,8 +65,9 @@ check_service() {
   local node
   for node in $NODES
   do
-    check_fn node_"$node" || continue
-    (node_"$node" | grep -q "\b${1}\b") && return 0
+    local n=$(make_id "$node")
+    check_fn node_"$n" || continue
+    (node_"$n" | grep -q "\b${1}\b") && return 0
   done
   return 1
 }
@@ -71,8 +76,9 @@ check_service() {
 
 do_list() {
   if [ $# -gt 0 ] ; then
-    if check_fn "node_${1}" ; then
-      "node_${1}"
+    local n=$(make_id "$1")
+    if check_fn "node_${n}" ; then
+      "node_${n}"
       return $?
     fi
   fi
