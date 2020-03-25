@@ -7,7 +7,9 @@ developing MuninLite was to provide a simple Munin Node, using inetd
 on systems without a full featured Perl and/or bash or a busybox
 system. 
 
-MuninLite is Copyright (C) 2007 Rune Nordbøe Skillingstad
+- MuninLite is Copyright (C) 2007 Rune Nordbøe Skillingstad
+- Additional changes Copyright (C) 2020 Alejandro Liu
+
 <rune@skillingstad.no> and released under GPLv2 (see [LICENSE](LICENSE) file)
 
 Features
@@ -22,6 +24,7 @@ This MuninLite implements the following plugins:
 * if_ : network interface
 * if_err_ : network interface errors
 * interrupts : interrupts
+* iptables_ : IP tables counters (as an additional node)
 * irqstats : irq statistics
 * load : system load
 * memory : memory usage
@@ -37,7 +40,6 @@ This MuninLite implements the following plugins:
 
 Work in progress:
 
-* fw_ : Firewall counters (note, needs iptables chains that end in "_counter")
 * libvirt_blkbps : virsh block device bytes per sec
 * libvirt_blkiops : virsh block device IOps
 * libvirt_cpu : virsh vm CPU usage
