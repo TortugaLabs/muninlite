@@ -26,14 +26,14 @@ end
 
 local nixio = require("nixio")
 
-print("Binding (" .. command .. ") to " ..listen.. "' and port " ..port.. "...")
+--~ print("Binding (" .. command .. ") to " ..listen.. "' and port " ..port.. "...")
 
 s = assert(nixio.bind(listen, port))
 s:listen(5)
 i, p = s:getsockname()
 assert(i, p)
 
-print("Waiting connection from talker on " .. i .. ":" .. p .. " (".. s:fileno() ..")...")
+--~ print("Waiting connection from talker on " .. i .. ":" .. p .. " (".. s:fileno() ..")...")
 
 if bg then
   -- running in the background...
@@ -49,7 +49,7 @@ while 1 do
   c = s:accept()
   assert(c)
   peer, port = c:getpeername()
-  print("Connected. " .. peer .. ":" .. port)
+  --~ print("Connected. " .. peer .. ":" .. port)
   p = nixio.fork()
   if p == 0 then
     s:close()
@@ -70,16 +70,3 @@ while 1 do
     a = nixio.waitpid(-1,"nohang")
   until a  
 end
-
-  
-
-
-
---~ l, e = c:receive()
---~ while not e do
-	--~ os.execute("ls -l /proc/self/fd")
-
-	--~ print(l)
-	--~ l, e = c:receive()
---~ end
---~ print(e)
