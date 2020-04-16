@@ -1,0 +1,13 @@
+#!/bin/sh
+find plugins -maxdepth 1 -type f -name '*.sh' | (
+  rc=0
+  sh -n munin-node.in || rc=1
+  while read f
+  do
+    sh -n "$f" || rc=1
+  done
+  exit $rc
+)
+echo -e "nodes\nlist\nconfig cpu\nfetch cpu\nquit\n" | busybox sh ./munin-node
+exit $?
+

@@ -11,7 +11,7 @@
 #
 # Data will be available in additional node:
 #
-# $HOSTNAME_fw
+# $HOSTNAME-fw
 #
 awktxt='
   /CNT:/ {
@@ -39,7 +39,7 @@ _iptables_read_data() {
   for v in "" "6"
   do
     type ip${v}tables >/dev/null 2>&1 || continue
-    ip${v}tables -L -x -v | awk "$awktxt" | sed -e "s/^/ip${v:-4},/"
+    ip${v}tables -L -x -v -n | awk "$awktxt" | sed -e "s/^/ip${v:-4},/"
   done
 }
 
@@ -58,17 +58,18 @@ _iptables_config() {
     p) var=pkts  ;;
     *) var=xxxxs ;;
   esac
+  local v=$(echo "$ipvx" | tr -dc 0-9)
   
   cat <<-_EOF_
-	graph_title	$ipvx Firewall $graph,$var
+	graph_title	IPv$v $graph $var
 	graph_args	--base 1000
 	graph_vlabel	$var/sec
-	graph_category	firewall
-	graph_info	This graphs shows $ipvx Firewall $var counters for the target $graph.
+	graph_category	IPv$v Firewall $var
+	graph_info	This graphs shows iptables IPv$v $var counters for the target $graph.
 	_EOF_
   echo "$_iptables_data_" | grep "^$ipvx,$porb,$graph," | sed -e "s!^$ipvx,$porb,$graph,!!" | while read i j
   do
-    echo "$i.label $i $var ($graph $ipvx)"
+    echo "$i.label $i $var"
     echo "$i.type DERIVE"
     echo "$i.min 0"
   done
@@ -78,18 +79,16 @@ _iptables_config() {
 if is_plugin_enabled "iptables_" ; then
   remove_plugin "iptables_"
 
-  _iptables_data_="$(_iptables_read_data)"
-  
+  _iptables_data_="$(_iptables_read_data)"  
   if [ -n "$_iptables_data_" ] ; then
-    NODES="$NODES ${HOSTNAME}-fw"
+    add_node ${HOSTNAME}-fw
     _iptables_items_=$(
       echo "$_iptables_data_" | tr ',' ' ' | while read ipvx porb graph xxx
       do
 	echo fw_${ipvx}_${porb}_${graph}
       done | sort -u
     )
-    n=$(make_id "${HOSTNAME}_fw")
-    eval "node_${n}() { echo \$_iptables_items_ ; }"
+    add_node_plugins ${HOSTNAME}-fw $_iptables_items_
     for i in $(
       echo "$_iptables_data_" | tr ',' ' ' | while read ipvx porb graph xxx
       do

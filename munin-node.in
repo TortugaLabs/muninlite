@@ -1,14 +1,14 @@
 #!/bin/sh
 #
-# Simple Bourne Shell script that implements Munin protocol and 
+# Simple Bourne Shell script that implements Munin protocol and
 # some common Linux plugins.
 #
 # For latest ORIGINAL version, see http://muninlite.sf.net/
 # For latest FORKED version, see https://github.com/TortugaLabs/muninlite
 #
-# Copyright (c) 2007-2011 Rune Nordbøe Skillingstad <rune@skillingstad.no>
+# Copyright (c) 2007-2011 Rune Nordb&x#xF8;e Skillingstad <rune@skillingstad.no>
 # Copyright (c) 2019 A Liu Ly
-# 
+#
 # Licensed under GPLv2 (see LICENSE file for full License)
 #
 set -euf -o pipefail
@@ -30,6 +30,16 @@ clean_fieldname() {
   echo "$@" | sed -e 's/^[^A-Za-z_]/_/' -e 's/[^A-Za-z0-9_]/_/g'
 }
 
+# Get a timestamp from a file
+filetime() {
+  if [ -f "$1" ] ; then
+    date -r "$1" +'%s'
+  else
+    echo 0
+  fi
+}
+
+
 # Check if plugin is enabled...
 is_plugin_enabled() {
   echo "$PLUGINS" | grep -q "\b$1\b"
@@ -47,15 +57,11 @@ remove_plugin() {
   PLUGINS="$new"
 }
 add_plugin() {
-  PLUGINS=$(echo $PLUGINS $1 | tr ' ' '\n' | sort -u|tr '\n' ' ')
+  PLUGINS=$(echo $PLUGINS $* | tr ' ' '\n' | sort -u|tr '\n' ' ')
 }
 check_fn() {
   type "$1" >/dev/null 2>&1
 }
-make_id() {
-  echo -n "$*" | tr -c '_A-Za-z0-9' _
-}
-
 check_service() {
   check_fn config_"${1}" || return 1
   check_fn fetch_"${1}" || return 1
@@ -65,18 +71,52 @@ check_service() {
   local node
   for node in $NODES
   do
-    local n=$(make_id "$node")
+    local n=$(clean_fieldname "$node")
     check_fn node_"$n" || continue
     (node_"$n" | grep -q "\b${1}\b") && return 0
   done
   return 1
 }
 
+# ==== REGISTER VARIABLE SETS ====
+register() {
+  local n="$1" i ; shift
+  local txt="${n}() {
+	case \"\$1\" in"
+  for i in "$@"
+  do
+     local k=$(echo "$i" | cut -d= -f1)
+     local v=$(echo "$i" | cut -d= -f2-)
+     txt="$txt
+	$k) echo \"$v\" ;;"
+  done
+  txt="$txt
+	esac
+	}"
+  eval "$txt"
+}
+
+
+# ==== ADD NODE FUNCTIONALITY ====
+add_node() {
+  local node="$1" node_id="$(clean_fieldname "$1")"
+  if echo "$NODES" | grep -q "\b$node\b" ; then
+    # Already exists...
+    return
+  fi
+  NODES="$NODES $node"
+  eval "NODE_PLUGINS_${node_id}=\"\""
+  eval "node_${node_id}() { echo \$NODE_PLUGINS_${node_id} ; }"
+}
+add_node_plugins() {
+  local node="$1" node_id="$(clean_fieldname "$1")" ; shift
+  eval "NODE_PLUGINS_${node_id}=\"\$NODE_PLUGINS_${node_id} $*\""
+}
 # ===== MUNIN-NODE PROTOCOL FUNCTIONS =====
 
 do_list() {
   if [ $# -gt 0 ] ; then
-    local n=$(make_id "$1")
+    local n=$(clean_fieldname "$1")
     if check_fn "node_${n}" ; then
       "node_${n}"
       return $?
@@ -116,43 +156,106 @@ do_quit() {
   exit 0
 }
 
+# Recognized, but otherwise ignored!
+do_cap() {
+  echo cap
+}
+
 main_loop() {
-  FUNCTIONS="list nodes config fetch version quit"
+  FUNCTIONS="list nodes config fetch version quit cap"
   echo "# munin node at $HOSTNAME"
-  while read arg0 arg1 
-  do 
+  while read arg0 arg1
+  do
     arg0=$(echo "$arg0" | xargs)
     arg1=$(echo "$arg1" | xargs)
     if [ -z "$arg0" ] ; then
       continue
     fi
-    if ! echo "$FUNCTIONS" | grep "\b$arg0\b" >/dev/null 2>&1 ; then
+    if ! echo "$FUNCTIONS" | grep -q "\b$arg0\b" ; then
       echo "# Unknown command. Try" $(echo "$FUNCTIONS" | sed -e 's/\( [[:alpha:]]\{1,\}\)/,\1/g' -e 's/,\( [[:alpha:]]\{1,\}\)$/ or\1/')
       continue
     fi
     "do_$arg0" $arg1
-  done 
-}
-
-# ===== COMMON LIB FUNCTIONS ====
-
-select_net_devs() {
-  grep '^ *[a-zA-Z0-9]\([^:]\)\{1,\}:' /proc/net/dev | cut -f1 -d: | sed 's/ //g' | while read dev
-  do
-    [ -z "$dev" ] && continue || :
-    if [ x"$dev" = x"lo" ] ; then
-      continue
-    fi
-    echo "$dev"
   done
 }
 
-clean_net_dev_name() {
-  echo "$@" | sed -e 's/\./VLAN/' -e 's/^[^A-Za-z_]/_/' -e 's/[^A-Za-z0-9_]/_/g'
+# ===== DEBUG TRACE MUNIN PROTOCOL ====
+
+debug() {
+  [ -n "${IN_DEBUG:-}" ] && return
+
+  local mode=f output="" rotate=""
+  while [ $# -gt 0 ]
+  do
+    case "$1" in
+      --dir|-d) mode=d ;;
+      --file|-f) mode=f ;;
+      --rotate=*) rotate=${1#--rotate=} ;;
+      -r) rotate=$2 ; shift ;;
+      *) output="$1" ; break ;;
+    esac
+    shift
+  done
+  [ -z "$output" ] && return 0
+  case "$mode" in
+  f)
+    if [ -n "$rotate" ] && [ -f "$output" ] ; then
+      # Truncate file...
+      local lc=$(wc -l < "$output")
+      if [ $lc -gt $rotate ] ; then
+        local txt=$(tail -$rotate "$output" | sed -e 's/^/:/')
+        echo "$txt" | sed -e 's/^://' > "$output"
+      fi
+    fi
+    ;;
+  d)
+    mkdir -p "$output"
+    local lc=$(ls -1 "$output" | wc -l) i
+    if [ $lc -gt $rotate ] ; then
+      local lc=$(expr $lc - $rotate)
+      ls -1 "$output" | head -$lc | while read f
+      do
+        rm -f "$output/$f"
+      done
+    fi
+    output="$output/trc$(date +'%Y-%m-%d_%H:%M:%S').$$.log"
+    ;;
+  *)
+    # Invalid debug mode specified
+    return
+    ;;
+  esac
+
+  export IN_DEBUG=1
+  exec 3>>"$output"
+  local start=$(awk '{print $1}' /proc/uptime)
+  (
+    echo "========" 1>&3
+    echo "START: $(date)" 1>&3
+    echo "========" 1>&3
+    while read -r line
+    do
+      echo "<: $line" 1>&3
+      echo "$line"
+      [ x"$line" = x"quit" ] && exit 0
+    done
+  ) | sh "$0" "$@" | (
+    while read -r line
+    do
+      echo ">: $line" 1>&3
+      echo "$line"
+    done
+  )
+  local stop=$(awk '{print $1}' /proc/uptime)
+  awk 'BEGIN { print "RUN TIME:", '$stop' - '$start' ; exit }' 1>&3
+  exit 0
 }
+
 
 # ===== RUN-TIME CONFIGURATION ====
 if [ -f /etc/muninlite.conf ] ; then
   . /etc/muninlite.conf
 fi
+
+
 

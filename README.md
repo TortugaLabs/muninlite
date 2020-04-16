@@ -1,5 +1,5 @@
-README for MuninLite
-====================
+# README for MuninLite
+
 
 MuninLite is a single Bourne Shell script that implements the Munin
 protocoll as well as some Linux specific plugins. The motivation for
@@ -12,8 +12,7 @@ system.
 
 <rune@skillingstad.no> and released under GPLv2 (see [LICENSE](LICENSE) file)
 
-Features
---------
+## Features
 
 This MuninLite implements the following plugins:
 
@@ -21,10 +20,8 @@ This MuninLite implements the following plugins:
 * df : Filesystem usage
 * entropy : entropy pool size
 * forks : forks per second
-* if_ : network interface
-* if_err_ : network interface errors
+* ifex_ : network interface stats (and errors)
 * interrupts : interrupts
-* iptables_ : IP tables counters (as an additional node)
 * irqstats : irq statistics
 * load : system load
 * memory : memory usage
@@ -35,6 +32,11 @@ This MuninLite implements the following plugins:
 * processes : process state
 * sensors : read temperature sensors
 * swap : swap in/out
+
+Additional plugins (not build by default)
+
+* iptables_ : IP tables counters (as an additional node)
+* netgear1 : poll netgear managed desktop switches
 * vgs : volume group stats
 * xen : basic Xen VM and memory stats
 
@@ -49,8 +51,8 @@ Work in progress:
 * owswitch_ : OpenWRT switch stats
 * plugindir_ : load plugins from directory
 
-Included files
---------------
+## Included files
+
 
 | File | Info
 |------|------
@@ -61,7 +63,8 @@ Included files
 |VERSION	|Current version
 |munin-node.in	|The MuninLite script skeleton
 |listener.lua	|Small lua script to listen for connections and start a program
-|plugins	|plugin scripts used to grabbing system data
+|plugins	|plugin scripts used for grabbing system data
+|extras         |Additional plugins (not included by default)
 |examples/xinetd.d/munin 	|Sample xinetd configuration
 |examples/inetd.conf		|Sample inetd.conf configuration
 |examples/inetd.busybox		|Sample inetd.conf configuration for busybox
@@ -71,13 +74,11 @@ Included files
 |_attic_/*	|Old stuff from previous versions
 |TODO		|Things to do in future releases
 
-Build requirements
-------------------
+## Build requirements
 
 `Make`	     (Not sure what requirements)
 
-Requirements
-------------
+## Requirements
 
 Bourne Shell (`ash` or `dash` should be sufficient)
 
@@ -90,8 +91,7 @@ Bourne Shell (`ash` or `dash` should be sufficient)
 |`xargs`     |(xargs in busybox is sufficient)
 |`inetd`     |(inetd in busybox is sufficient) or `lua` using `listener.lua`
 
-Installation
-------------
+## Installation
 
 Download source and unpack it.
 
@@ -144,8 +144,7 @@ Iptables might be set with something like this:
   # iptables -A INPUT -p tcp --dport munin --source 10.42.42.25 -j ACCEPT 
 ```
 
-Test
-----
+## Test
 
 To test script, just run it (/usr/bin/local/munin-node):
 
@@ -179,8 +178,7 @@ For inetd-test, try to telnet to munin port from allowed host.
   Connection closed by foreign host.
 ```
 
-Plugin configuration 
---------------------
+## Plugin configuration 
 
 Create a `/etc/muninlite.conf` with config options.
 
@@ -191,10 +189,13 @@ Use the functions:
 - `remove_plugin` : to remove a plugin from the list
 - `add_plugin` : to enable a plugin (this make sure that plugins are not enabled twice)
 
-Otherwise, you can assign `PLUGINS` a space sparated list of plugins to enable.
+Otherwise, you can just assign `PLUGINS` a space sparated list of plugins to enable.
 
-Munin configuration
--------------------
+You can enable a debug mode.
+
+Further configuration is plugin specific.
+
+## Munin configuration
 
 Configure your `/etc/munin/munin.conf` as you would for a regular
 munin-node.

@@ -1,0 +1,22 @@
+#
+# Travis CI 
+#
+language: shell
+before_install:
+  - sudo apt-get -y install lua5.1
+script:
+- luac -o listener.bin listener.lua
+- make
+- sh checker
+- "tar -zcvf muninlite-$(cat VERSION).tar.gz munin-node listener.lua"
+- ls -sh
+notifications:
+  email: false
+deploy:
+  provider: releases
+  api_key: "$GITHUB_TOKEN"
+  file_glob: true
+  file: "muninlite-*.tar.gz"
+  skip_cleanup: true
+  on:
+    tags: true
